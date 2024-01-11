@@ -1,14 +1,12 @@
-﻿using System.Runtime.InteropServices;
+﻿namespace LilySwapper.Workspace.CProvider.Objects;
 
-namespace Galaxy_Swapper_v2.Workspace.CProvider.Objects
+[StructLayout(LayoutKind.Sequential)]
+public readonly struct FIoContainerId
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public readonly struct FIoContainerId
+    public readonly ulong Id;
+
+    public override string ToString()
     {
-        public readonly ulong Id;
-        public override string ToString()
-        {
-            return Id.ToString();
-        }
+        return Id.ToString();
     }
 }

@@ -1,60 +1,54 @@
-﻿using Galaxy_Swapper_v2.Workspace.Utilities;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+﻿namespace LilySwapper.Workspace.Components;
 
-namespace Galaxy_Swapper_v2.Workspace.Components
+/// <summary>
+///     Interaction logic for CNewsControl.xaml
+/// </summary>
+public partial class CNewsControl : UserControl
 {
-    /// <summary>
-    /// Interaction logic for CNewsControl.xaml
-    /// </summary>
-    public partial class CNewsControl : UserControl
+    public static readonly DependencyProperty HeaderProperty =
+        DependencyProperty.Register("Header", typeof(string), typeof(CNewsControl));
+
+    public static readonly DependencyProperty DescriptionProperty =
+        DependencyProperty.Register("Description", typeof(string), typeof(CNewsControl));
+
+    public static readonly DependencyProperty URLProperty =
+        DependencyProperty.Register("URL", typeof(string), typeof(CNewsControl));
+
+    public static readonly DependencyProperty NewsProperty =
+        DependencyProperty.Register("News", typeof(ImageSource), typeof(CNewsControl));
+
+    public CNewsControl()
     {
-        public static readonly DependencyProperty HeaderProperty =
-            DependencyProperty.Register("Header", typeof(string), typeof(CNewsControl));
+        InitializeComponent();
+    }
 
-        public string Header
-        {
-            get { return (string)GetValue(HeaderProperty); }
-            set { SetValue(HeaderProperty, value); }
-        }
+    public string Header
+    {
+        get => (string)GetValue(HeaderProperty);
+        set => SetValue(HeaderProperty, value);
+    }
 
-        public static readonly DependencyProperty DescriptionProperty =
-            DependencyProperty.Register("Description", typeof(string), typeof(CNewsControl));
+    public string Description
+    {
+        get => (string)GetValue(DescriptionProperty);
+        set => SetValue(DescriptionProperty, value);
+    }
 
-        public string Description
-        {
-            get { return (string)GetValue(DescriptionProperty); }
-            set { SetValue(DescriptionProperty, value); }
-        }
+    public string URL
+    {
+        get => (string)GetValue(URLProperty);
+        set => SetValue(URLProperty, value);
+    }
 
-        public static readonly DependencyProperty URLProperty =
-            DependencyProperty.Register("URL", typeof(string), typeof(CNewsControl));
+    public ImageSource News
+    {
+        get => (ImageSource)GetValue(NewsProperty);
+        set => SetValue(NewsProperty, value);
+    }
 
-        public string URL
-        {
-            get { return (string)GetValue(URLProperty); }
-            set { SetValue(URLProperty, value); }
-        }
-
-        public static readonly DependencyProperty NewsProperty =
-            DependencyProperty.Register("News", typeof(ImageSource), typeof(CNewsControl));
-
-        public ImageSource News
-        {
-            get { return (ImageSource)GetValue(NewsProperty); }
-            set { SetValue(NewsProperty, value); }
-        }
-
-        public CNewsControl()
-        {
-            InitializeComponent();
-        }
-
-        private void News_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (!string.IsNullOrEmpty(this.URL))
-                this.URL.UrlStart();
-        }
+    private void News_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(URL))
+            URL.UrlStart();
     }
 }

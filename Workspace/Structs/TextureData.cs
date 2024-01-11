@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
+﻿namespace LilySwapper.Workspace.Structs;
 
-namespace Galaxy_Swapper_v2.Workspace.Structs
+public class TextureData
 {
-    public class TextureData
-    {
-        public byte[] SearchBuffer { get; set; } = default!;
-        public long Offset { get; set; } = default!;
-        public List<TextureParameter> TextureParameters = new();
-    }
+    public List<TextureParameter> TextureParameters = new();
+    public byte[] SearchBuffer { get; set; } = default!;
+    public long Offset { get; set; } = default!;
 }

@@ -1,15 +1,15 @@
-﻿namespace Galaxy_Swapper_v2.Workspace.Structs
+﻿namespace LilySwapper.Workspace.Structs;
+
+public class BinaryData
 {
-    public class BinaryData
+    public BinaryData(string hash, string name, string path)
     {
-        public string Hash { get; set; }
-        public string Name { get; set; }
-        public string Path { get; set; }
-        public BinaryData(string hash, string name, string path)
-        {
-            Hash = hash;
-            Name = name;
-            Path = path;
-        }
+        Hash = hash;
+        Name = name;
+        Path = path;
     }
+
+    public string Hash { get; set; }
+    public string Name { get; set; }
+    public string Path { get; set; }
 }

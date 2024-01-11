@@ -1,11 +1,10 @@
-﻿namespace Galaxy_Swapper_v2.Workspace.Generation.Formats
+﻿namespace LilySwapper.Workspace.Generation.Formats;
+
+public class Downloadable
 {
-    public class Downloadable
-    {
-        public string Pak;
-        public string Sig;
-        public string Ucas;
-        public string Utoc;
-        public string Zip;
-    }
+    public string Pak;
+    public string Sig;
+    public string Ucas;
+    public string Utoc;
+    public string Zip;
 }

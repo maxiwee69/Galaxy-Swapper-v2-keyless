@@ -1,21 +1,24 @@
-﻿using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+﻿using Colors = LilySwapper.Workspace.Properties.Colors;
 
-namespace Galaxy_Swapper_v2.Workspace.Components
+namespace LilySwapper.Workspace.Components;
+
+/// <summary>
+///     Interaction logic for CMinimizeControl.xaml
+/// </summary>
+public partial class CMinimizeControl : UserControl
 {
-    /// <summary>
-    /// Interaction logic for CMinimizeControl.xaml
-    /// </summary>
-    public partial class CMinimizeControl : UserControl
+    public CMinimizeControl()
     {
-        public CMinimizeControl()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        private void Minimize_Hover(object sender, MouseEventArgs e) => Minimize.Background = Properties.Colors.ControlHover_Brush;
+    private void Minimize_Hover(object sender, MouseEventArgs e)
+    {
+        Minimize.Background = Colors.ControlHover_Brush;
+    }
 
-        private void Minimize_Leave(object sender, MouseEventArgs e) => Minimize.Background = Brushes.Transparent;
+    private void Minimize_Leave(object sender, MouseEventArgs e)
+    {
+        Minimize.Background = Brushes.Transparent;
     }
 }

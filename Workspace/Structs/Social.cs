@@ -1,9 +1,8 @@
-﻿namespace Galaxy_Swapper_v2.Workspace.Structs
+﻿namespace LilySwapper.Workspace.Structs;
+
+public class Social
 {
-    public class Social
-    {
-        public string Icon = null!;
-        public string Header = null!;
-        public string URL = null!;
-    }
+    public string Header = null!;
+    public string Icon = null!;
+    public string URL = null!;
 }

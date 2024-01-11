@@ -1,67 +1,53 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿namespace LilySwapper.Workspace.CProvider.Objects;
 
-namespace Galaxy_Swapper_v2.Workspace.CProvider.Objects
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public readonly struct FIoChunkId : IEquatable<FIoChunkId>
 {
-    public enum EIoChunkType : byte
+    public readonly ulong ChunkId;
+    private readonly ushort _chunkIndex;
+    private readonly byte _padding;
+    public readonly byte ChunkType;
+
+    public FIoChunkId(ulong chunkId, ushort chunkIndex, byte chunkType)
     {
-        Invalid,
-        InstallManifest,
-        ExportBundleData,
-        BulkData,
-        OptionalBulkData,
-        MemoryMappedBulkData,
-        LoaderGlobalMeta,
-        LoaderInitialLoadMeta,
-        LoaderGlobalNames,
-        LoaderGlobalNameHashes,
-        ContainerHeader
+        ChunkId = chunkId;
+        _chunkIndex = (ushort)(((chunkIndex & 0xFF) << 8) | ((chunkIndex & 0xFF00) >> 8)); // NETWORK_ORDER16
+        ChunkType = chunkType;
+        _padding = 0;
     }
 
-    public enum EIoChunkType5 : byte
+    public FIoChunkId(ulong chunkId, ushort chunkIndex, EIoChunkType chunkType) : this(chunkId, chunkIndex,
+        (byte)chunkType)
     {
-        Invalid = 0,
-        ExportBundleData = 1,
-        BulkData = 2,
-        OptionalBulkData = 3,
-        MemoryMappedBulkData = 4,
-        ScriptObjects = 5,
-        ContainerHeader = 6,
-        ExternalFile = 7,
-        ShaderCodeLibrary = 8,
-        ShaderCode = 9,
-        PackageStoreEntry = 10,
-        DerivedData = 11,
-        EditorDerivedData = 12
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct FIoChunkId : IEquatable<FIoChunkId>
+    public FIoChunkId(ulong chunkId, ushort chunkIndex, EIoChunkType5 chunkType) : this(chunkId, chunkIndex,
+        (byte)chunkType)
     {
-        public readonly ulong ChunkId;
-        private readonly ushort _chunkIndex;
-        private readonly byte _padding;
-        public readonly byte ChunkType;
+    }
 
-        public FIoChunkId(ulong chunkId, ushort chunkIndex, byte chunkType)
-        {
-            ChunkId = chunkId;
-            _chunkIndex = (ushort)((chunkIndex & 0xFF) << 8 | (chunkIndex & 0xFF00) >> 8); // NETWORK_ORDER16
-            ChunkType = chunkType;
-            _padding = 0;
-        }
+    public static bool operator ==(FIoChunkId left, FIoChunkId right)
+    {
+        return left.Equals(right);
+    }
 
-        public FIoChunkId(ulong chunkId, ushort chunkIndex, EIoChunkType chunkType) : this(chunkId, chunkIndex, (byte)chunkType) { }
-        public FIoChunkId(ulong chunkId, ushort chunkIndex, EIoChunkType5 chunkType) : this(chunkId, chunkIndex, (byte)chunkType) { }
+    public static bool operator !=(FIoChunkId left, FIoChunkId right)
+    {
+        return !left.Equals(right);
+    }
 
-        public static bool operator ==(FIoChunkId left, FIoChunkId right) => left.Equals(right);
+    public bool Equals(FIoChunkId other)
+    {
+        return ChunkId == other.ChunkId && ChunkType == other.ChunkType;
+    }
 
-        public static bool operator !=(FIoChunkId left, FIoChunkId right) => !left.Equals(right);
+    public override bool Equals(object? obj)
+    {
+        return obj is FIoChunkId other && Equals(other);
+    }
 
-        public bool Equals(FIoChunkId other) => ChunkId == other.ChunkId && ChunkType == other.ChunkType;
-
-        public override bool Equals(object? obj) => obj is FIoChunkId other && Equals(other);
-
-        public override string ToString() => $"0x{ChunkId:X8} | {ChunkType}";
+    public override string ToString()
+    {
+        return $"0x{ChunkId:X8} | {ChunkType}";
     }
 }

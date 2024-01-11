@@ -1,11 +1,7 @@
-﻿using System;
-using System.IO;
+﻿namespace LilySwapper.Workspace.Verify.EpicManifestParser.Objects;
 
-namespace Galaxy_Swapper_v2.Workspace.Verify.EpicManifestParser.Objects
+public class ManifestOptions
 {
-    public class ManifestOptions
-    {
-        public Uri ChunkBaseUri { get; set; }
-        public DirectoryInfo ChunkCacheDirectory { get; set; }
-    }
+    public Uri ChunkBaseUri { get; set; }
+    public DirectoryInfo ChunkCacheDirectory { get; set; }
 }

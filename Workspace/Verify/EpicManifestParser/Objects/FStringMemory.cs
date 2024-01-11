@@ -1,22 +1,33 @@
-﻿using System;
-using System.Text;
+﻿namespace LilySwapper.Workspace.Verify.EpicManifestParser.Objects;
 
-namespace Galaxy_Swapper_v2.Workspace.Verify.EpicManifestParser.Objects
+public readonly struct FStringMemory
 {
-    public readonly struct FStringMemory
+    public Memory<byte> Memory { get; }
+    public bool IsUnicode { get; }
+
+    public Span<byte> GetSpan()
     {
-        public Memory<byte> Memory { get; }
-        public bool IsUnicode { get; }
-        public Span<byte> GetSpan() => Memory.Span;
-        public bool IsEmpty() => Memory.IsEmpty;
-        public Encoding GetEncoding() => IsUnicode ? Encoding.Unicode : Encoding.UTF8;
+        return Memory.Span;
+    }
 
-        public FStringMemory(Memory<byte> memory, bool isUnicode)
-        {
-            Memory = memory;
-            IsUnicode = isUnicode;
-        }
+    public bool IsEmpty()
+    {
+        return Memory.IsEmpty;
+    }
 
-        public override string ToString() => GetEncoding().GetString(GetSpan());
+    public Encoding GetEncoding()
+    {
+        return IsUnicode ? Encoding.Unicode : Encoding.UTF8;
+    }
+
+    public FStringMemory(Memory<byte> memory, bool isUnicode)
+    {
+        Memory = memory;
+        IsUnicode = isUnicode;
+    }
+
+    public override string ToString()
+    {
+        return GetEncoding().GetString(GetSpan());
     }
 }

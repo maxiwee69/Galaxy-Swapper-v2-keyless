@@ -1,95 +1,81 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 
-namespace Galaxy_Swapper_v2.Workspace.Verify.EpicManifestParser.Objects
+namespace LilySwapper.Workspace.Verify.EpicManifestParser.Objects;
+
+public class FileManifest
 {
-    public class FileManifest
+    private readonly Manifest _manifest;
+
+    internal FileManifest(Manifest manifest, string name = null)
     {
-        private readonly Manifest _manifest;
-        public string Name { get; }
-        public string Hash { get; internal set; }
-        public List<FileChunkPart> ChunkParts { get; internal set; }
-        public List<string> InstallTags { get; internal set; }
+        _manifest = manifest;
+        Name = name;
+        Hash = null;
+        ChunkParts = null;
+        InstallTags = null;
+    }
 
-        internal FileManifest(Manifest manifest, string name = null)
-        {
-            _manifest = manifest;
-            Name = name;
-            Hash = null;
-            ChunkParts = null;
-            InstallTags = null;
-        }
+    internal FileManifest(ref Utf8JsonReader reader, Manifest manifest) : this(manifest)
+    {
+        if (reader.TokenType != JsonTokenType.StartObject) return;
 
-        internal FileManifest(ref Utf8JsonReader reader, Manifest manifest) : this(manifest)
+        while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
         {
-            if (reader.TokenType != JsonTokenType.StartObject)
+            if (reader.TokenType != JsonTokenType.PropertyName)
             {
-                return;
+                reader.Skip();
+                continue;
             }
 
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+            switch (reader.GetString())
             {
-                if (reader.TokenType != JsonTokenType.PropertyName)
+                case "Filename":
                 {
-                    reader.Skip();
-                    continue;
+                    reader.Read();
+                    Name = reader.GetString();
+                    break;
                 }
-
-                switch (reader.GetString())
+                case "FileHash":
                 {
-                    case "Filename":
-                        {
-                            reader.Read();
-                            Name = reader.GetString();
-                            break;
-                        }
-                    case "FileHash":
-                        {
-                            reader.Read();
-                            Hash = Utilities.StringBlobToHexString(reader.ValueSpan);
-                            break;
-                        }
-                    case "FileChunkParts":
-                        {
-                            reader.Read();
+                    reader.Read();
+                    Hash = Utilities.StringBlobToHexString(reader.ValueSpan);
+                    break;
+                }
+                case "FileChunkParts":
+                {
+                    reader.Read();
 
-                            if (reader.TokenType != JsonTokenType.StartArray)
-                            {
-                                break;
-                            }
+                    if (reader.TokenType != JsonTokenType.StartArray) break;
 
-                            ChunkParts = new List<FileChunkPart>();
-                            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                            {
-                                ChunkParts.Add(new FileChunkPart(ref reader));
-                            }
+                    ChunkParts = new List<FileChunkPart>();
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                        ChunkParts.Add(new FileChunkPart(ref reader));
 
-                            break;
-                        }
-                    case "InstallTags":
-                        {
-                            reader.Read();
+                    break;
+                }
+                case "InstallTags":
+                {
+                    reader.Read();
 
-                            if (reader.TokenType != JsonTokenType.StartArray)
-                            {
-                                break;
-                            }
+                    if (reader.TokenType != JsonTokenType.StartArray) break;
 
-                            InstallTags = new List<string>(1); // wasn't ever bigger than 1 ¯\_(ツ)_/¯
-                            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                            {
-                                InstallTags.Add(reader.GetString());
-                            }
+                    InstallTags = new List<string>(1); // wasn't ever bigger than 1 ¯\_(ツ)_/¯
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                        InstallTags.Add(reader.GetString());
 
-                            break;
-                        }
+                    break;
                 }
             }
         }
+    }
 
-        public override string ToString()
-        {
-            return Name;
-        }
+    public string Name { get; }
+    public string Hash { get; internal set; }
+    public List<FileChunkPart> ChunkParts { get; internal set; }
+    public List<string> InstallTags { get; internal set; }
+
+    public override string ToString()
+    {
+        return Name;
     }
 }

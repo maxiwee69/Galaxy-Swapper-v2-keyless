@@ -1,67 +1,62 @@
-﻿using Galaxy_Swapper_v2.Workspace.Generation.Formats;
-using Galaxy_Swapper_v2.Workspace.Utilities;
-using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+﻿namespace LilySwapper.Workspace.Usercontrols.Overlays;
 
-namespace Galaxy_Swapper_v2.Workspace.Usercontrols.Overlays
+/// <summary>
+///     Interaction logic for OptionsView.xaml
+/// </summary>
+public partial class OptionsView : UserControl
 {
-    /// <summary>
-    /// Interaction logic for OptionsView.xaml
-    /// </summary>
-    public partial class OptionsView : UserControl
+    private readonly string DisplayName = "TBD";
+    private readonly List<Option> Options;
+
+    public OptionsView(string displayname, List<Option> options)
     {
-        private List<Option> Options;
-        private string DisplayName = "TBD";
-        public OptionsView(string displayname, List<Option> options)
+        InitializeComponent();
+        Options = options;
+        DisplayName = displayname;
+    }
+
+    private void Close_Click(object sender, MouseButtonEventArgs e)
+    {
+        Memory.MainView.RemoveOverlay();
+    }
+
+    private void OptionsView_Loaded(object sender, RoutedEventArgs e)
+    {
+        Header.Text = Languages.Read(Languages.Type.View, "OptionsView", "Header");
+        Tip.Text = Languages.Read(Languages.Type.View, "OptionsView", "Tip");
+
+        foreach (var Option in Options)
         {
-            InitializeComponent();
-            Options = options;
-            DisplayName = displayname;
+            var NewOption = CreateCosmetic(Option);
+            Options_Items.Children.Add(NewOption);
         }
 
-        private void Close_Click(object sender, MouseButtonEventArgs e) => Memory.MainView.RemoveOverlay();
-        private void OptionsView_Loaded(object sender, RoutedEventArgs e)
-        {
-            Header.Text = Languages.Read(Languages.Type.View, "OptionsView", "Header");
-            Tip.Text = Languages.Read(Languages.Type.View, "OptionsView", "Tip");
+        Presence.Update($"{DisplayName} (Options)");
+    }
 
-            foreach (var Option in Options)
-            {
-                var NewOption = CreateCosmetic(Option);
-                Options_Items.Children.Add(NewOption);
-            }
+    private Image CreateCosmetic(Option Option)
+    {
+        var NewCosmetic = new Image
+            { Height = 85, Width = 85, Margin = new Thickness(10), Cursor = Cursors.Hand, ToolTip = Option.Name };
+        NewCosmetic.LoadImage(Option.Icon);
+        NewCosmetic.MouseEnter += Cosmetic_MouseEnter;
+        NewCosmetic.MouseLeave += Cosmetic_MouseLeave;
+        NewCosmetic.MouseLeftButtonDown += delegate { Memory.MainView.SetOverlay(new SwapView(Option)); };
 
-            Presence.Update($"{DisplayName} (Options)");
-        }
+        return NewCosmetic;
+    }
 
-        private Image CreateCosmetic(Option Option)
-        {
-            var NewCosmetic = new Image() { Height = 85, Width = 85, Margin = new Thickness(10), Cursor = Cursors.Hand, ToolTip = Option.Name };
-            NewCosmetic.LoadImage(Option.Icon);
-            NewCosmetic.MouseEnter += Cosmetic_MouseEnter;
-            NewCosmetic.MouseLeave += Cosmetic_MouseLeave;
-            NewCosmetic.MouseLeftButtonDown += delegate
-            {
-                Memory.MainView.SetOverlay(new SwapView(Option));
-            };
+    private void Cosmetic_MouseEnter(object sender, MouseEventArgs e)
+    {
+        ((Image)sender).Margin = new Thickness(5);
+        ((Image)sender).Height += 10;
+        ((Image)sender).Width += 10;
+    }
 
-            return NewCosmetic;
-        }
-
-        private void Cosmetic_MouseEnter(object sender, MouseEventArgs e)
-        {
-            ((Image)sender).Margin = new Thickness(5);
-            ((Image)sender).Height += 10;
-            ((Image)sender).Width += 10;
-        }
-
-        private void Cosmetic_MouseLeave(object sender, MouseEventArgs e)
-        {
-            ((Image)sender).Margin = new Thickness(10);
-            ((Image)sender).Height -= 10;
-            ((Image)sender).Width -= 10;
-        }
+    private void Cosmetic_MouseLeave(object sender, MouseEventArgs e)
+    {
+        ((Image)sender).Margin = new Thickness(10);
+        ((Image)sender).Height -= 10;
+        ((Image)sender).Width -= 10;
     }
 }

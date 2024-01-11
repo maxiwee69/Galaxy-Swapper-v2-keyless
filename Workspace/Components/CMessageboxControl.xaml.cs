@@ -1,106 +1,111 @@
-﻿using Galaxy_Swapper_v2.Workspace.Utilities;
-using System;
-using System.Linq;
-using System.Media;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+﻿using System.Media;
+using System.Windows.Forms;
 using System.Windows.Interop;
-using System.Windows.Media.Animation;
+using Application = System.Windows.Application;
+using Button = System.Windows.Controls.Button;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
-namespace Galaxy_Swapper_v2.Workspace.Components
+namespace LilySwapper.Workspace.Components;
+
+public partial class CMessageboxControl : Window
 {
-    public partial class CMessageboxControl : Window
+    private readonly MessageBoxButton Button = MessageBoxButton.OK;
+    private readonly bool Discord;
+    private readonly bool Exit;
+    private readonly string[] Links = null!;
+    private readonly string[] Solutions = null!;
+    private Storyboard DiscordHover = null!;
+    public MessageBoxResult Result = MessageBoxResult.None;
+
+    public CMessageboxControl(string header, string context, MessageBoxButton buttons = MessageBoxButton.OK,
+        string[] links = null, string[] solutions = null, bool discord = false, bool exit = false)
     {
-        public MessageBoxResult Result = MessageBoxResult.None;
-        private MessageBoxButton Button = MessageBoxButton.OK;
-        private Storyboard DiscordHover = null!;
-        private string[] Links = null!;
-        private string[] Solutions = null!;
-        private bool Discord = false;
-        private bool Exit;
-        public CMessageboxControl(string header, string context, MessageBoxButton buttons = MessageBoxButton.OK, string[] links = null, string[] solutions = null, bool discord = false, bool exit = false)
+        InitializeComponent();
+        Header.Text = header;
+        Context.Text = context;
+        Links = links;
+        Solutions = solutions;
+        Button = buttons;
+        Discord = discord;
+        Exit = exit;
+    }
+
+    private void MessageView_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (Discord && !string.IsNullOrEmpty(Global.Discord))
         {
-            InitializeComponent();
-            Header.Text = header;
-            Context.Text = context;
-            Links = links;
-            Solutions = solutions;
-            Button = buttons;
-            Discord = discord;
-            Exit = exit;
+            DiscordLogo.Visibility = Visibility.Visible;
+            DiscordLogo.IsEnabled = true;
         }
 
-        private void MessageView_Loaded(object sender, RoutedEventArgs e)
+        switch (Button)
         {
-            if (Discord && !string.IsNullOrEmpty(Global.Discord))
-            {
-                DiscordLogo.Visibility = Visibility.Visible;
-                DiscordLogo.IsEnabled = true;
-            }
-
-            switch (Button)
-            {
-                case MessageBoxButton.OK:
-                    Ok.IsEnabled = true;
-                    Ok.Visibility = Visibility.Visible;
-                    CloseButton.IsEnabled = true;
-                    break;
-                case MessageBoxButton.YesNo:
-                    Yes.IsEnabled = true;
-                    Yes.Visibility = Visibility.Visible;
-                    No.IsEnabled = true;
-                    No.Visibility = Visibility.Visible;
-                    break;
-                case MessageBoxButton.YesNoCancel:
-                    Yes.IsEnabled = true;
-                    Yes.Visibility = Visibility.Visible;
-                    No.IsEnabled = true;
-                    No.Visibility = Visibility.Visible;
-                    Cancel.IsEnabled = true;
-                    Cancel.Visibility = Visibility.Visible;
-                    break;
-            }
-
-            if (Solutions is not null)
-            {
-                Context.Text += "\n\nPlease try the following solutions:";
-                Solutions.ToList().ForEach(delegate (string solution)
-                {
-                    TextBlock context2 = Context;
-                    context2.Text = context2.Text + "\n・" + solution;
-                });
-            }
-
-            //Load messagebox on active monitor
-            if (App.Current.MainWindow.IsActive)
-            {
-                var mainScreen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(App.Current.MainWindow).Handle);
-                Left = mainScreen.WorkingArea.Left + (mainScreen.WorkingArea.Width - Width) / 2;
-                Top = mainScreen.WorkingArea.Top + (mainScreen.WorkingArea.Height - Height) / 2;
-            }
-
-            SystemSounds.Beep.Play();
+            case MessageBoxButton.OK:
+                Ok.IsEnabled = true;
+                Ok.Visibility = Visibility.Visible;
+                CloseButton.IsEnabled = true;
+                break;
+            case MessageBoxButton.YesNo:
+                Yes.IsEnabled = true;
+                Yes.Visibility = Visibility.Visible;
+                No.IsEnabled = true;
+                No.Visibility = Visibility.Visible;
+                break;
+            case MessageBoxButton.YesNoCancel:
+                Yes.IsEnabled = true;
+                Yes.Visibility = Visibility.Visible;
+                No.IsEnabled = true;
+                No.Visibility = Visibility.Visible;
+                Cancel.IsEnabled = true;
+                Cancel.Visibility = Visibility.Visible;
+                break;
         }
 
-        private void Drag_Click(object sender, MouseButtonEventArgs e) => DragMove();
-
-        private void Close_Click(object sender, MouseButtonEventArgs e) => Result_Click(Cancel, null!);
-
-        private void Discord_Click(object sender, RoutedEventArgs e) => Global.Discord.UrlStart();
-
-        private void Discord_MouseEnter(object sender, MouseEventArgs e)
+        if (Solutions is not null)
         {
-            if (DiscordHover is not null)
+            Context.Text += "\n\nPlease try the following solutions:";
+            Solutions.ToList().ForEach(delegate(string solution)
             {
-                DiscordHover.Stop();
-            }
+                var context2 = Context;
+                context2.Text = context2.Text + "\n・" + solution;
+            });
+        }
 
-            DiscordHover = Interface.SetElementAnimations(
+        //Load messagebox on active monitor
+        if (Application.Current.MainWindow.IsActive)
+        {
+            var mainScreen = Screen.FromHandle(new WindowInteropHelper(Application.Current.MainWindow).Handle);
+            Left = mainScreen.WorkingArea.Left + (mainScreen.WorkingArea.Width - Width) / 2;
+            Top = mainScreen.WorkingArea.Top + (mainScreen.WorkingArea.Height - Height) / 2;
+        }
+
+        SystemSounds.Beep.Play();
+    }
+
+    private void Drag_Click(object sender, MouseButtonEventArgs e)
+    {
+        DragMove();
+    }
+
+    private void Close_Click(object sender, MouseButtonEventArgs e)
+    {
+        Result_Click(Cancel, null!);
+    }
+
+    private void Discord_Click(object sender, RoutedEventArgs e)
+    {
+        Global.Discord.UrlStart();
+    }
+
+    private void Discord_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (DiscordHover is not null) DiscordHover.Stop();
+
+        DiscordHover = Interface.SetElementAnimations(
             new Interface.BaseAnim
             {
                 Element = DiscordLogo,
-                Property = new PropertyPath(FrameworkElement.HeightProperty),
+                Property = new PropertyPath(HeightProperty),
                 ElementAnim = new DoubleAnimation
                 {
                     From = DiscordLogo.Height,
@@ -111,7 +116,7 @@ namespace Galaxy_Swapper_v2.Workspace.Components
             new Interface.BaseAnim
             {
                 Element = DiscordLogo,
-                Property = new PropertyPath(FrameworkElement.WidthProperty),
+                Property = new PropertyPath(WidthProperty),
                 ElementAnim = new DoubleAnimation
                 {
                     From = DiscordLogo.Width,
@@ -120,21 +125,18 @@ namespace Galaxy_Swapper_v2.Workspace.Components
                 }
             });
 
-            DiscordHover.Begin();
-        }
+        DiscordHover.Begin();
+    }
 
-        private void Discord_MouseLeave(object sender, MouseEventArgs e)
-        {
-            if (DiscordHover is not null)
-            {
-                DiscordHover.Stop();
-            }
+    private void Discord_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (DiscordHover is not null) DiscordHover.Stop();
 
-            DiscordHover = Interface.SetElementAnimations(
+        DiscordHover = Interface.SetElementAnimations(
             new Interface.BaseAnim
             {
                 Element = DiscordLogo,
-                Property = new PropertyPath(FrameworkElement.HeightProperty),
+                Property = new PropertyPath(HeightProperty),
                 ElementAnim = new DoubleAnimation
                 {
                     From = DiscordLogo.Height,
@@ -145,7 +147,7 @@ namespace Galaxy_Swapper_v2.Workspace.Components
             new Interface.BaseAnim
             {
                 Element = DiscordLogo,
-                Property = new PropertyPath(FrameworkElement.WidthProperty),
+                Property = new PropertyPath(WidthProperty),
                 ElementAnim = new DoubleAnimation
                 {
                     From = DiscordLogo.Width,
@@ -154,47 +156,41 @@ namespace Galaxy_Swapper_v2.Workspace.Components
                 }
             });
 
-            DiscordHover.Begin();
-        }
+        DiscordHover.Begin();
+    }
 
-        private void Result_Click(object sender, RoutedEventArgs e)
+    private void Result_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+
+        switch (button.Name.ToUpper())
         {
-            var button = sender as Button;
-            
-            switch (button.Name.ToUpper())
-            {
-                case "OK":
-                    Result = MessageBoxResult.OK;
-                    break;
-                case "YES":
-                    Result = MessageBoxResult.Yes;
-                    break;
-                case "NO":
-                    Result = MessageBoxResult.No;
-                    break;
-                case "CANCEL":
-                    Result = MessageBoxResult.Cancel;
-                    break;
-                default:
-                    Result = MessageBoxResult.Cancel;
-                    break;
-            }
-
-            if (Links is not null)
-            {
-                Links.ToList().ForEach(delegate (string link)
-                {
-                    if (!string.IsNullOrWhiteSpace(link))
-                    {
-                        link.UrlStart();
-                    }
-                });
-            }
-
-            if (Exit)
-                Environment.Exit(0);
-            else
-                Close();
+            case "OK":
+                Result = MessageBoxResult.OK;
+                break;
+            case "YES":
+                Result = MessageBoxResult.Yes;
+                break;
+            case "NO":
+                Result = MessageBoxResult.No;
+                break;
+            case "CANCEL":
+                Result = MessageBoxResult.Cancel;
+                break;
+            default:
+                Result = MessageBoxResult.Cancel;
+                break;
         }
+
+        if (Links is not null)
+            Links.ToList().ForEach(delegate(string link)
+            {
+                if (!string.IsNullOrWhiteSpace(link)) link.UrlStart();
+            });
+
+        if (Exit)
+            Environment.Exit(0);
+        else
+            Close();
     }
 }

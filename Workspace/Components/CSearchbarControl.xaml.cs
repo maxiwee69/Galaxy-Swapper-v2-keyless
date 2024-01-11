@@ -1,28 +1,24 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿namespace LilySwapper.Workspace.Components;
 
-namespace Galaxy_Swapper_v2.Workspace.Components
+/// <summary>
+///     Interaction logic for CSearchbarControl.xaml
+/// </summary>
+public partial class CSearchbarControl : UserControl
 {
-    /// <summary>
-    /// Interaction logic for CSearchbarControl.xaml
-    /// </summary>
-    public partial class CSearchbarControl : UserControl
+    public CSearchbarControl()
     {
-        public CSearchbarControl()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        private void Searchbar_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (Searchbar.Text == "Search")
-                Searchbar.Clear();
-        }
+    private void Searchbar_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (Searchbar.Text == "Search")
+            Searchbar.Clear();
+    }
 
-        private void Searchbar_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (Searchbar.Text.Length == 0)
-                Searchbar.Text = "Search";
-        }
+    private void Searchbar_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (Searchbar.Text.Length == 0)
+            Searchbar.Text = "Search";
     }
 }

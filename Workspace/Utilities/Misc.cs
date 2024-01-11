@@ -1,466 +1,439 @@
-﻿using Galaxy_Swapper_v2.Workspace.Hashes;
-using Galaxy_Swapper_v2.Workspace.Properties;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
+﻿using System.Globalization;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Xml.Linq;
-using static Galaxy_Swapper_v2.Workspace.Global;
+using LilySwapper.Workspace.Hashes;
+using Newtonsoft.Json;
 
-namespace Galaxy_Swapper_v2.Workspace.Utilities
+namespace LilySwapper.Workspace.Utilities;
+
+public static class Misc
 {
-    public static class Misc
+    public static SolidColorBrush HexToBrush(this string hex)
     {
-        public static SolidColorBrush HexToBrush(this string hex) => new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-        public static Color HexToColor(this string hex) => (Color)ColorConverter.ConvertFromString(hex);
+        return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+    }
 
-        public static bool ValidJson(this string Content)
+    public static Color HexToColor(this string hex)
+    {
+        return (Color)ColorConverter.ConvertFromString(hex);
+    }
+
+    public static bool ValidJson(this string Content)
+    {
+        try
         {
-            try
-            {
-                JObject.Parse(Content);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            JObject.Parse(Content);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool ValidArray(this string Content)
+    {
+        try
+        {
+            JArray.Parse(Content);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static void UrlStart(this string url)
+    {
+        var Procc = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/C start {url}",
+            WindowStyle = ProcessWindowStyle.Hidden,
+            CreateNoWindow = true
+        };
+        Process.Start(Procc);
+    }
+
+    public static bool Encrypted(this string JSON)
+    {
+        return Regex.IsMatch(JSON, @"^[a-zA-Z0-9\+/]*={0,2}$");
+    }
+
+    public static byte[] AssetLengthBlock(int Length)
+    {
+        var Return = new byte[5];
+        Buffer.BlockCopy(BitConverter.GetBytes(Length), 0, Return, 0, 4);
+        Array.Reverse(Return);
+        return Return;
+    }
+
+    public static byte[] CompressionBlock(uint Offset, uint CompressedSize, uint UncompressedSize, uint PakIndex,
+        bool IsCompressed)
+    {
+        var CompressionData = new byte[12];
+        Buffer.BlockCopy(BitConverter.GetBytes(Offset), 0, CompressionData, 0, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(PakIndex), 0, CompressionData, 4, 1);
+        Buffer.BlockCopy(BitConverter.GetBytes(CompressedSize), 0, CompressionData, 5, 3);
+        Buffer.BlockCopy(BitConverter.GetBytes(UncompressedSize), 0, CompressionData, 8, 3);
+
+        if (IsCompressed)
+            Buffer.BlockCopy(BitConverter.GetBytes(1), 0, CompressionData, 11, 1);
+
+        return CompressionData;
+    }
+
+    public static void LoadImage(this Image image, string url,
+        string invalid =
+            "https://github.com/GalaxySwapperOfficial/Galaxy-Swapper-API/blob/main/In%20Game/Icons/invalid.png?raw=true")
+    {
+        if (image is null)
+        {
+            Log.Error("LoadImage image is null skipping");
+            return;
         }
 
-        public static bool ValidArray(this string Content)
+        var bitmapImage = new BitmapImage();
+
+        if (url is null)
         {
-            try
-            {
-                JArray.Parse(Content);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            Log.Error("LoadImage url Is null loading as invalid");
+            bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
+            return;
         }
 
-        public static void UrlStart(this string url)
+        var name = $"{Fnv1a.Hash(url)}-{image.Width}x{image.Height}.cache";
+
+        try
         {
-            ProcessStartInfo Procc = new ProcessStartInfo
+            if (!ImageCache.ReadCache(name, bitmapImage))
             {
-                FileName = "cmd.exe",
-                Arguments = $"/C start {url}",
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true
-            };
-            Process.Start(Procc);
+                bitmapImage.DownloadFailed += IconDownloadFailed;
+                bitmapImage.DownloadCompleted += IconDownloadComplete;
+                bitmapImage = new BitmapImage(new Uri(url, UriKind.RelativeOrAbsolute));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"LoadImage caught exception while loading {url} to 'bitmapImage': {ex.Message}");
+            bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
         }
 
-        public static bool Encrypted(this string JSON) => Regex.IsMatch(JSON, @"^[a-zA-Z0-9\+/]*={0,2}$");
+        image.Source = bitmapImage;
 
-        public static byte[] AssetLengthBlock(int Length)
+        void IconDownloadFailed(object sender, ExceptionEventArgs e)
         {
-            byte[] Return = new byte[5];
-            Buffer.BlockCopy(BitConverter.GetBytes(Length), 0, Return, 0, 4);
-            Array.Reverse(Return);
-            return Return;
-        }
-
-        public static byte[] CompressionBlock(uint Offset, uint CompressedSize, uint UncompressedSize, uint PakIndex, bool IsCompressed)
-        {
-            var CompressionData = new byte[12];
-            Buffer.BlockCopy(BitConverter.GetBytes(Offset), 0, CompressionData, 0, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(PakIndex), 0, CompressionData, 4, 1);
-            Buffer.BlockCopy(BitConverter.GetBytes(CompressedSize), 0, CompressionData, 5, 3);
-            Buffer.BlockCopy(BitConverter.GetBytes(UncompressedSize), 0, CompressionData, 8, 3);
-
-            if (IsCompressed)
-                Buffer.BlockCopy(BitConverter.GetBytes(1), 0, CompressionData, 11, 1);
-
-            return CompressionData;
-        }
-
-        public static void LoadImage(this Image image, string url, string invalid = "https://github.com/GalaxySwapperOfficial/Galaxy-Swapper-API/blob/main/In%20Game/Icons/invalid.png?raw=true")
-        {
-            if (image is null)
-            {
-                Log.Error($"LoadImage image is null skipping");
-                return;
-            }
-
-            var bitmapImage = new BitmapImage();
-
-            if (url is null)
-            {
-                Log.Error($"LoadImage url Is null loading as invalid");
-                bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
-                return;
-            }
-
-            string name = $"{Fnv1a.Hash(url)}-{image.Width}x{image.Height}.cache";
-
-            try
-            {
-                if (!ImageCache.ReadCache(name, bitmapImage))
-                {
-                    bitmapImage.DownloadFailed += IconDownloadFailed;
-                    bitmapImage.DownloadCompleted += IconDownloadComplete;
-                    bitmapImage = new BitmapImage(new Uri(url, UriKind.RelativeOrAbsolute));
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, $"LoadImage caught exception while loading {url} to 'bitmapImage': {ex.Message}");
-                bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
-            }
-
+            Log.Error("IconDownloadFailed event was triggered loading as invalid url");
+            bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
             image.Source = bitmapImage;
-
-            void IconDownloadFailed(object sender, ExceptionEventArgs e)
-            {
-                Log.Error($"IconDownloadFailed event was triggered loading as invalid url");
-                bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
-                image.Source = bitmapImage;
-            }
-
-            void IconDownloadComplete(object sender, EventArgs e)
-            {
-                ImageCache.Cache(name, bitmapImage);
-            }
         }
 
-        public static BitmapImage LoadImageToBitmap(string url, string invalid = "https://github.com/GalaxySwapperOfficial/Galaxy-Swapper-API/blob/main/In%20Game/Icons/invalid.png?raw=true")
+        void IconDownloadComplete(object sender, EventArgs e)
         {
-            var bitmapImage = new BitmapImage();
+            ImageCache.Cache(name, bitmapImage);
+        }
+    }
 
-            if (url is null)
-            {
-                Log.Error($"LoadImageToBitmap url Is null loading as invalid");
-                bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
-                return bitmapImage;
-            }
+    public static BitmapImage LoadImageToBitmap(string url,
+        string invalid =
+            "https://github.com/GalaxySwapperOfficial/Galaxy-Swapper-API/blob/main/In%20Game/Icons/invalid.png?raw=true")
+    {
+        var bitmapImage = new BitmapImage();
 
-            try
-            {
-                bitmapImage.BeginInit();
-                bitmapImage.UriSource = new Uri(url, UriKind.RelativeOrAbsolute);
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, $"LoadImageToBitmap caught exception while loading {url} to 'bitmapImage': {ex.Message}");
-                bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
-            }
-
+        if (url is null)
+        {
+            Log.Error("LoadImageToBitmap url Is null loading as invalid");
+            bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
             return bitmapImage;
         }
 
-        public static string Hash(string filePath)
+        try
         {
-            using SHA256 sHA = SHA256.Create();
-            using FileStream inputStream = File.OpenRead(filePath);
-            return BitConverter.ToString(sHA.ComputeHash(inputStream)).Replace("-", string.Empty);
+            bitmapImage.BeginInit();
+            bitmapImage.UriSource = new Uri(url, UriKind.RelativeOrAbsolute);
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.EndInit();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"LoadImageToBitmap caught exception while loading {url} to 'bitmapImage': {ex.Message}");
+            bitmapImage = new BitmapImage(new Uri(invalid, UriKind.RelativeOrAbsolute));
         }
 
-        public static TimeSpan GetElaspedAndStop(this Stopwatch stopwatch)
-        {
-            TimeSpan timespan = stopwatch.Elapsed;
-            stopwatch.Stop();
-            return timespan;
-        }
+        return bitmapImage;
+    }
 
-        public static bool ValidImage(string URL)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                try
-                {
-                    HttpResponseMessage response = client.Send(new HttpRequestMessage(HttpMethod.Head, URL));
+    public static string Hash(string filePath)
+    {
+        using var sHA = SHA256.Create();
+        using var inputStream = File.OpenRead(filePath);
+        return BitConverter.ToString(sHA.ComputeHash(inputStream)).Replace("-", string.Empty);
+    }
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                catch (HttpRequestException)
-                {
-                    return false;
-                }
-            }
-        }
+    public static TimeSpan GetElaspedAndStop(this Stopwatch stopwatch)
+    {
+        var timespan = stopwatch.Elapsed;
+        stopwatch.Stop();
+        return timespan;
+    }
 
-        public static byte[] MatchToByte(byte[] content, int ByeLength)
-        {
-            byte[] result = new byte[ByeLength];
-            Buffer.BlockCopy(content, 0, result, 0, ByeLength);
-            return result;
-        }
-
-        public static bool KeyIsNullOrEmpty(this JToken token)
-        {
-            return (token == null) ||
-                   (token.Type == JTokenType.Array && !token.HasValues) ||
-                   (token.Type == JTokenType.Object && !token.HasValues) ||
-                   (token.Type == JTokenType.String && token.ToString() == String.Empty) ||
-                   (token.Type == JTokenType.Null);
-        }
-
-        public static bool CanEdit(this string file)
+    public static bool ValidImage(string URL)
+    {
+        using (var client = new HttpClient())
         {
             try
             {
-                using (FileStream Filestream = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                {
-                    Filestream.Close();
+                var response = client.Send(new HttpRequestMessage(HttpMethod.Head, URL));
+
+                if (response.IsSuccessStatusCode)
                     return true;
-                }
+                return false;
             }
-            catch (IOException)
+            catch (HttpRequestException)
             {
                 return false;
             }
         }
+    }
 
-        public static void Download(string path, string url, string name = "file")
+    public static byte[] MatchToByte(byte[] content, int ByeLength)
+    {
+        var result = new byte[ByeLength];
+        Buffer.BlockCopy(content, 0, result, 0, ByeLength);
+        return result;
+    }
+
+    public static bool KeyIsNullOrEmpty(this JToken token)
+    {
+        return token == null ||
+               (token.Type == JTokenType.Array && !token.HasValues) ||
+               (token.Type == JTokenType.Object && !token.HasValues) ||
+               (token.Type == JTokenType.String && token.ToString() == string.Empty) ||
+               token.Type == JTokenType.Null;
+    }
+
+    public static bool CanEdit(this string file)
+    {
+        try
         {
-            var stopwatch = new Stopwatch(); stopwatch.Start();
-
-            using (WebClient WC = new WebClient())
+            using (var Filestream = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
-                Log.Information($"Downloading data from: {url} to: {path}");
-
-                try
-                {
-                    WC.DownloadFile(url, path);
-                    WC.Dispose();
-                }
-                catch (IOException ioException)
-                {
-                    var driveInfo = new DriveInfo(path);
-                    Log.Error(ioException, $"Failed to download {name} drive: {driveInfo.Name} has ran out of space");
-                    throw new CustomException($"Failed to download {name}! Drive {driveInfo.Name} has ran out of space!\nMake room in {driveInfo.Name} and try again.");
-                }
-                catch (Exception Exception)
-                {
-                    Log.Error(Exception, $"Failed to download {name}");
-                    Message.DisplaySTA("Error", $"Webclient caught a exception while downloading {name}!", discord: true, solutions: new[] { "Disable Windows Defender Firewall", "Disable any anti-virus softwares", "Turn on a VPN" });
-                    throw new CustomException($"Webclient caught a exception while downloading {name}!");
-                }
+                Filestream.Close();
+                return true;
             }
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
 
-            Log.Information($"Downloaded {name} to: {path} in {stopwatch.GetElaspedAndStop().ToString("mm':'ss")}");
+    public static void Download(string path, string url, string name = "file")
+    {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
+        using (var WC = new WebClient())
+        {
+            Log.Information($"Downloading data from: {url} to: {path}");
+
+            try
+            {
+                WC.DownloadFile(url, path);
+                WC.Dispose();
+            }
+            catch (IOException ioException)
+            {
+                var driveInfo = new DriveInfo(path);
+                Log.Error(ioException, $"Failed to download {name} drive: {driveInfo.Name} has ran out of space");
+                throw new CustomException(
+                    $"Failed to download {name}! Drive {driveInfo.Name} has ran out of space!\nMake room in {driveInfo.Name} and try again.");
+            }
+            catch (Exception Exception)
+            {
+                Log.Error(Exception, $"Failed to download {name}");
+                Message.DisplaySTA("Error", $"Webclient caught a exception while downloading {name}!", discord: true,
+                    solutions: new[]
+                        { "Disable Windows Defender Firewall", "Disable any anti-virus softwares", "Turn on a VPN" });
+                throw new CustomException($"Webclient caught a exception while downloading {name}!");
+            }
         }
 
-        public static int IndexOfSequence(this byte[] buffer, byte[] pattern, int Star)
+        Log.Information($"Downloaded {name} to: {path} in {stopwatch.GetElaspedAndStop().ToString("mm':'ss")}");
+    }
+
+    public static int IndexOfSequence(this byte[] buffer, byte[] pattern, int Star)
+    {
+        var Start = 0;
+        if (Star != 0) Start = Star;
+        var i = Array.IndexOf(buffer, pattern[0], Start);
+        while (i >= 0 && i <= buffer.Length - pattern.Length)
         {
-            int Start = 0;
-            if (Star != 0)
-            {
-                Start = Star;
-            }
-            int i = Array.IndexOf(buffer, pattern[0], Start);
-            while (i >= 0 && i <= buffer.Length - pattern.Length)
-            {
-                byte[] segment = new byte[pattern.Length];
-                Buffer.BlockCopy(buffer, i, segment, 0, pattern.Length);
-                if (segment.SequenceEqual(pattern))
-                    return i;
-                i = Array.IndexOf(buffer, pattern[0], i + 1);
-            }
-            return -1;
+            var segment = new byte[pattern.Length];
+            Buffer.BlockCopy(buffer, i, segment, 0, pattern.Length);
+            if (segment.SequenceEqual(pattern))
+                return i;
+            i = Array.IndexOf(buffer, pattern[0], i + 1);
         }
 
-        public static int IndexOfSequenceReverse(this byte[] data, byte[] pattern)
+        return -1;
+    }
+
+    public static int IndexOfSequenceReverse(this byte[] data, byte[] pattern)
+    {
+        if (data == null || pattern == null || data.Length == 0 || pattern.Length == 0 ||
+            pattern.Length > data.Length) return -1; // Invalid input
+
+        for (var i = data.Length - pattern.Length; i >= 0; i--)
         {
-            if (data == null || pattern == null || data.Length == 0 || pattern.Length == 0 || pattern.Length > data.Length)
-            {
-                return -1; // Invalid input
-            }
+            var match = true;
 
-            for (int i = data.Length - pattern.Length; i >= 0; i--)
-            {
-                bool match = true;
-
-                for (int j = 0; j < pattern.Length; j++)
+            for (var j = 0; j < pattern.Length; j++)
+                if (data[i + j] != pattern[j])
                 {
-                    if (data[i + j] != pattern[j])
-                    {
-                        match = false;
-                        break;
-                    }
-                }
-
-                if (match)
-                {
-                    return i; // Pattern found
-                }
-            }
-
-            return -1; // Pattern not found
-        }
-
-        public static long IndexOfSequence(Stream stream, byte[] pattern, long pos = 0)
-        {
-            long bufferSize = 4096;
-            byte[] buffer = new byte[bufferSize];
-            int patternLength = pattern.Length;
-            int matchIndex = 0;
-
-            stream.Seek(pos, SeekOrigin.Begin);
-
-            while (true)
-            {
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-
-                if (bytesRead == 0)
+                    match = false;
                     break;
-
-                for (int i = 0; i < bytesRead; i++)
-                {
-                    if (buffer[i] == pattern[matchIndex])
-                    {
-                        matchIndex++;
-
-                        if (matchIndex == patternLength)
-                        {
-                            return stream.Position - bytesRead + i + 1 - patternLength;
-                        }
-                    }
-                    else
-                    {
-                        matchIndex = 0;
-                    }
                 }
-            }
 
-            return -1;
+            if (match) return i; // Pattern found
         }
 
+        return -1; // Pattern not found
+    }
 
-        public static byte[] HexToByte(this string hexString)
+    public static long IndexOfSequence(Stream stream, byte[] pattern, long pos = 0)
+    {
+        long bufferSize = 4096;
+        var buffer = new byte[bufferSize];
+        var patternLength = pattern.Length;
+        var matchIndex = 0;
+
+        stream.Seek(pos, SeekOrigin.Begin);
+
+        while (true)
         {
-            hexString = hexString.Replace(" ", "");
-            byte[] data = new byte[hexString.Length / 2];
-            for (int index = 0; index < data.Length; index++)
-            {
-                string byteValue = hexString.Substring(index * 2, 2);
-                data[index] = byte.Parse(byteValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-            }
-            return data;
-        }
+            var bytesRead = stream.Read(buffer, 0, buffer.Length);
 
-        public static string FindFileByExtension(string path, string exten)
-        {
-            string[] foundFiles = Directory.GetFiles(path, $"*{exten}", SearchOption.AllDirectories);
+            if (bytesRead == 0)
+                break;
 
-            if (foundFiles.Length == 0) 
-                return null!;
-            else
-                return foundFiles[0];
-        }
-
-        public static bool TryDelete(FileInfo fileInfo)
-        {
-            try
-            {
-                if (fileInfo.Exists)
+            for (var i = 0; i < bytesRead; i++)
+                if (buffer[i] == pattern[matchIndex])
                 {
-                    fileInfo.Delete();
-                }
-            }
-            catch (Exception Exception)
-            {
-                Log.Error(Exception, $"Failed to remove {fileInfo.FullName}");
-                return false;
-            }
+                    matchIndex++;
 
-            return true;
+                    if (matchIndex == patternLength) return stream.Position - bytesRead + i + 1 - patternLength;
+                }
+                else
+                {
+                    matchIndex = 0;
+                }
         }
 
-        public static bool TryDelete(string file)
-        {
-            try
-            {
-                if (File.Exists(file))
-                {
-                    File.Delete(file);
-                }
-            }
-            catch (Exception Exception)
-            {
-                Log.Error(Exception, $"Failed to remove {file}");
-                return false;
-            }
+        return -1;
+    }
 
-            return true;
+
+    public static byte[] HexToByte(this string hexString)
+    {
+        hexString = hexString.Replace(" ", "");
+        var data = new byte[hexString.Length / 2];
+        for (var index = 0; index < data.Length; index++)
+        {
+            var byteValue = hexString.Substring(index * 2, 2);
+            data[index] = byte.Parse(byteValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         }
 
-        public static string ByteToHex(byte[] byteArray) => BitConverter.ToString(byteArray).Replace("-", " ");
+        return data;
+    }
 
-        public static long FileLength(this string path) => new FileInfo(path).Length;
+    public static string FindFileByExtension(string path, string exten)
+    {
+        var foundFiles = Directory.GetFiles(path, $"*{exten}", SearchOption.AllDirectories);
 
-        public static byte[] CreateNull(int Length)
+        if (foundFiles.Length == 0)
+            return null!;
+        return foundFiles[0];
+    }
+
+    public static bool TryDelete(FileInfo fileInfo)
+    {
+        try
         {
-            return new byte[Length];
+            if (fileInfo.Exists) fileInfo.Delete();
         }
-
-        public static bool FilesInUse(DirectoryInfo directoryInfo)
+        catch (Exception Exception)
         {
-            foreach (var fileInfo in directoryInfo.GetFiles())
-            {
-                if (!fileInfo.Exists)
-                {
-                    continue;
-                }
-                else if (!CanEdit(fileInfo.FullName))
-                {
-                    return true;
-                }
-            }
-
+            Log.Error(Exception, $"Failed to remove {fileInfo.FullName}");
             return false;
         }
 
-        public static bool FilesInUse(string directory)
-        {
-            foreach (var fileInfo in new DirectoryInfo(directory).GetFiles())
-            {
-                if (!fileInfo.Exists)
-                {
-                    continue;
-                }
-                else if (!CanEdit(fileInfo.FullName))
-                {
-                    return true;
-                }
-            }
+        return true;
+    }
 
+    public static bool TryDelete(string file)
+    {
+        try
+        {
+            if (File.Exists(file)) File.Delete(file);
+        }
+        catch (Exception Exception)
+        {
+            Log.Error(Exception, $"Failed to remove {file}");
             return false;
         }
 
-        public static JObject TryParse(string content)
+        return true;
+    }
+
+    public static string ByteToHex(byte[] byteArray)
+    {
+        return BitConverter.ToString(byteArray).Replace("-", " ");
+    }
+
+    public static long FileLength(this string path)
+    {
+        return new FileInfo(path).Length;
+    }
+
+    public static byte[] CreateNull(int Length)
+    {
+        return new byte[Length];
+    }
+
+    public static bool FilesInUse(DirectoryInfo directoryInfo)
+    {
+        foreach (var fileInfo in directoryInfo.GetFiles())
+            if (!fileInfo.Exists)
+                continue;
+            else if (!CanEdit(fileInfo.FullName)) return true;
+
+        return false;
+    }
+
+    public static bool FilesInUse(string directory)
+    {
+        foreach (var fileInfo in new DirectoryInfo(directory).GetFiles())
+            if (!fileInfo.Exists)
+                continue;
+            else if (!CanEdit(fileInfo.FullName)) return true;
+
+        return false;
+    }
+
+    public static JObject TryParse(string content)
+    {
+        try
         {
-            try
-            {
-                return JsonConvert.DeserializeObject<JObject>(content);
-            }
-            catch (Exception Exception)
-            {
-                Log.Error(Exception, "Failed to parse Json content");
-                return null!;
-            }
+            return JsonConvert.DeserializeObject<JObject>(content);
+        }
+        catch (Exception Exception)
+        {
+            Log.Error(Exception, "Failed to parse Json content");
+            return null!;
         }
     }
 }

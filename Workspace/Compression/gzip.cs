@@ -1,52 +1,46 @@
-﻿using System;
-using System.IO;
-using System.IO.Compression;
-using System.Text;
+﻿using System.IO.Compression;
 
-namespace Galaxy_Swapper_v2.Workspace.Compression
+namespace LilySwapper.Workspace.Compression;
+
+public static class gzip
 {
-    public static class gzip
+    public static byte[] Compress(byte[] data)
     {
-        public static byte[] Compress(byte[] data)
+        using (var compressedStream = new MemoryStream())
         {
-            using (MemoryStream compressedStream = new MemoryStream())
+            using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Compress))
             {
-                using (GZipStream gzipStream = new GZipStream(compressedStream, CompressionMode.Compress))
-                {
-                    gzipStream.Write(data, 0, data.Length);
-                }
-
-                return compressedStream.ToArray();
+                gzipStream.Write(data, 0, data.Length);
             }
-        }
 
-        public static byte[] Compress(string data)
-        {
-            return Compress(Encoding.ASCII.GetBytes(data));
+            return compressedStream.ToArray();
         }
+    }
 
-        public static byte[] Decompress(byte[] compressedData)
+    public static byte[] Compress(string data)
+    {
+        return Compress(Encoding.ASCII.GetBytes(data));
+    }
+
+    public static byte[] Decompress(byte[] compressedData)
+    {
+        using (var compressedStream = new MemoryStream(compressedData))
+        using (var decompressedStream = new MemoryStream())
         {
-            using (MemoryStream compressedStream = new MemoryStream(compressedData))
-            using (MemoryStream decompressedStream = new MemoryStream())
+            using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
             {
-                using (GZipStream gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
-                {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = gzipStream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        decompressedStream.Write(buffer, 0, bytesRead);
-                    }
-                }
-
-                return decompressedStream.ToArray();
+                var buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = gzipStream.Read(buffer, 0, buffer.Length)) > 0)
+                    decompressedStream.Write(buffer, 0, bytesRead);
             }
-        }
 
-        public static byte[] Decompress(string base64)
-        {
-            return Decompress(Convert.FromBase64String(base64));
+            return decompressedStream.ToArray();
         }
+    }
+
+    public static byte[] Decompress(string base64)
+    {
+        return Decompress(Convert.FromBase64String(base64));
     }
 }

@@ -1,8 +1,7 @@
-﻿namespace Galaxy_Swapper_v2.Workspace.CProvider.Objects
+﻿namespace LilySwapper.Workspace.CProvider.Objects;
+
+public struct FPackageImportReference
 {
-    public struct FPackageImportReference
-    {
-        public uint ImportedPackageIndex;
-        public uint ImportedPublicExportHashIndex;
-    }
+    public uint ImportedPackageIndex;
+    public uint ImportedPublicExportHashIndex;
 }

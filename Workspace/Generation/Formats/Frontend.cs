@@ -1,12 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+﻿namespace LilySwapper.Workspace.Generation.Formats;
 
-namespace Galaxy_Swapper_v2.Workspace.Generation.Formats
+public class Frontend
 {
-    public class Frontend
-    {
-        public JToken Empty { get; set; }
-        public Dictionary<string, Cosmetic> Cosmetics = new Dictionary<string, Cosmetic>();
-        public List<Option> Options = new List<Option>();
-    }
+    public Dictionary<string, Cosmetic> Cosmetics = new();
+    public List<Option> Options = new();
+    public JToken Empty { get; set; }
 }

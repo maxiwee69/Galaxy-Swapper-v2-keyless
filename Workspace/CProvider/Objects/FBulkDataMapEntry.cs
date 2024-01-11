@@ -1,16 +1,13 @@
-﻿using System.Runtime.InteropServices;
+﻿namespace LilySwapper.Workspace.CProvider.Objects;
 
-namespace Galaxy_Swapper_v2.Workspace.CProvider.Objects
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct FBulkDataMapEntry
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct FBulkDataMapEntry
-    {
-        public const uint Size = 32;
+    public const uint Size = 32;
 
-        public ulong SerialOffset;
-        public ulong DuplicateSerialOffset;
-        public ulong SerialSize;
-        public uint Flags;
-        public uint Pad;
-    }
+    public ulong SerialOffset;
+    public ulong DuplicateSerialOffset;
+    public ulong SerialSize;
+    public uint Flags;
+    public uint Pad;
 }

@@ -1,21 +1,24 @@
-﻿using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+﻿using Colors = LilySwapper.Workspace.Properties.Colors;
 
-namespace Galaxy_Swapper_v2.Workspace.Components
+namespace LilySwapper.Workspace.Components;
+
+/// <summary>
+///     Interaction logic for CCloseControl.xaml
+/// </summary>
+public partial class CCloseControl : UserControl
 {
-    /// <summary>
-    /// Interaction logic for CCloseControl.xaml
-    /// </summary>
-    public partial class CCloseControl : UserControl
+    public CCloseControl()
     {
-        public CCloseControl()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        private void Close_Hover(object sender, MouseEventArgs e) => Close.Background = Properties.Colors.Red;
+    private void Close_Hover(object sender, MouseEventArgs e)
+    {
+        Close.Background = Colors.Red;
+    }
 
-        private void Close_Leave(object sender, MouseEventArgs e) => Close.Background = Brushes.Transparent;
+    private void Close_Leave(object sender, MouseEventArgs e)
+    {
+        Close.Background = Brushes.Transparent;
     }
 }

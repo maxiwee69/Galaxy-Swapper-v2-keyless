@@ -1,12 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
+﻿namespace LilySwapper.Workspace.Structs;
 
-namespace Galaxy_Swapper_v2.Workspace.Structs
+public class PluginData
 {
-    public class PluginData
-    {
-        public string Import = null!;
-        public string Path = null!;
-        public string Content = null!;
-        public JObject Parse = null!;
-    }
+    public string Content = null!;
+    public string Import = null!;
+    public JObject Parse = null!;
+    public string Path = null!;
 }
